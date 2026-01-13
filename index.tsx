@@ -1,10 +1,13 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 
-// The Clerk publishable key for authentication.
-const PUBLISHABLE_KEY = 'pk_test_dW5pcXVlLWhhbXN0ZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
+// The Clerk publishable key for authentication. 
+// It will now try to get it from environment variables first.
+// Fixed: Cast import.meta to any to resolve TS error with Vite's env properties.
+const PUBLISHABLE_KEY = ((import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY) || 'pk_test_dW5pcXVlLWhhbXN0ZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
