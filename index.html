@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3e%3crect width='48' height='48' rx='8' fill='black'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-size='20' font-weight='bold' fill='white'%3eRB%3c/text%3e%3c/svg%3e" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Resume Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                yellow: '#FDE047', // A nice bright yellow
+              },
+              primary: {"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a","950":"#172554"}
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            keyframes: {
+              'fade-in-up': {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              'slide-in-right': {
+                '0%': { opacity: '0', transform: 'translateX(-30px)' },
+                '100%': { opacity: '1', transform: 'translateX(0)' },
+              },
+              'infinite-scroll': {
+                'from': { transform: 'translateX(0)' },
+                'to': { transform: 'translateX(-50%)' },
+              },
+              'float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-15px)' },
+                '100%': { transform: 'translateY(0px)' },
+              },
+            },
+            animation: {
+              'fade-in-up': 'fade-in-up 0.8s ease-out forwards',
+              'slide-in-right': 'slide-in-right 0.5s ease-out forwards',
+              'infinite-scroll': 'infinite-scroll 40s linear infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', 'sans-serif';
+      }
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Hide scrollbar for IE, Edge and Firefox */
+      .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      
+      /* Mobile-specific styles for the resume preview for better readability */
+      @media (max-width: 1023px) {
+        #resume-preview {
+          transform: none !important;
+          width: 100% !important;
+          height: auto !important;
+          box-shadow: none !important;
+          margin: 0 !important;
+        }
+      }
+
+      /* Robust print styles for high-quality PDF export */
+      @media print {
+        @page {
+            margin: 0;
+            size: auto;
+        }
+        body {
+            background-color: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        /* Reset layout for all containers leading to the resume */
+        #root,
+        #root > div,
+        main,
+        main > div,
+        .print-container,
+        .live-preview-wrapper {
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+            position: static !important;
+            flex: none !important;
+            min-height: unset !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        #resume-preview {
+            transform: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            border: none !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+        
+        .page-break-inside-avoid {
+            page-break-inside: avoid;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@18.2.0",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@18.2.0/client",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "@clerk/clerk-react": "https://aistudiocdn.com/@clerk/clerk-react@^5.2.8",
+    "react-dom/": "https://aistudiocdn.com/react-dom@18.2.0/",
+    "react/": "https://aistudiocdn.com/react@18.2.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-white dark:bg-slate-900">
+    <div id="root">
+      <!-- Professional Loading Screen -->
+      <div id="loading-screen" style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: white; z-index: 10000; transition: opacity 0.5s ease-out; opacity: 1;">
+        <style>
+          @keyframes pulse-logo {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
+          }
+          .dark #loading-screen {
+            background-color: #0f172a; /* slate-900 */
+          }
+          .dark #loading-screen p {
+             color: #94a3b8; /* slate-400 */
+          }
+           .dark #loading-screen p:last-child {
+             color: #64748b; /* slate-500 */
+          }
+          .loading-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px; /* w-12 */
+            height: 48px; /* h-12 */
+            background-color: #000;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.25rem; /* text-xl */
+            border-radius: 0.5rem; /* rounded-lg */
+            animation: pulse-logo 2s ease-in-out infinite;
+          }
+          .dark .loading-logo {
+            background-color: #FDE047; /* brand-yellow */
+            color: #000;
+            animation-name: pulse-logo-dark;
+          }
+          @keyframes pulse-logo-dark {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(253, 224, 71, 0.2); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(253, 224, 71, 0); }
+          }
+        </style>
+        <div class="loading-logo">
+          RB
+        </div>
+        <p style="margin-top: 1rem; font-weight: 600; color: #4b5563;">Loading AI Resume Builder...</p>
+        <p style="font-size: 0.875rem; color: #6b7281; margin-top: 0.25rem;">Crafting your experience.</p>
+      </div>
+    </div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
