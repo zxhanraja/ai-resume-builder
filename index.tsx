@@ -4,10 +4,17 @@ import ReactDOM from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App';
 
-// The Clerk publishable key for authentication. 
-// It will now try to get it from environment variables first.
-// Fixed: Cast import.meta to any to resolve TS error with Vite's env properties.
-const PUBLISHABLE_KEY = ((import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY) || 'pk_test_dW5pcXVlLWhhbXN0ZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
+// Safe environment variable retrieval
+let PUBLISHABLE_KEY = '';
+try {
+  PUBLISHABLE_KEY = (import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY ||
+    (process.env as any).VITE_CLERK_PUBLISHABLE_KEY ||
+    'pk_test_dW5pcXVlLWhhbXN0ZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
+} catch (e) {
+  console.error("Error accessing environment variables:", e);
+  // Fallback to the known key if everything fails
+  PUBLISHABLE_KEY = 'pk_test_dW5pcXVlLWhhbXN0ZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,20 +23,20 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 
-// If the key is not found, the app will still run in a signed-out mode instead of crashing.
-if (!PUBLISHABLE_KEY) {
-  console.warn("Clerk publishable key not found. App is running in signed-out mode.");
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} else {
+// Fail-safe: Render without Clerk if the provider fails
+try {
   root.render(
     <React.StrictMode>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
         <App />
       </ClerkProvider>
+    </React.StrictMode>
+  );
+} catch (error) {
+  console.error("ClerkProvider failed to initialize:", error);
+  root.render(
+    <React.StrictMode>
+      <App />
     </React.StrictMode>
   );
 }

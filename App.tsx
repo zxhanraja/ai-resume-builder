@@ -22,18 +22,11 @@ import TermsOfServicePage from './components/pages/TermsOfServicePage';
 
 // --- SVG Icons for Modal --- //
 const FileIcon = ({ className = "w-5 h-5" }) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6.414A2 2 0 0017.414 5L13 1.586A2 2 0 0011.586 1H6a2 2 0 00-2 2zm6 10a1 1 0 10-2 0v1a1 1 0 102 0v-1zm-3 0a1 1 0 10-2 0v1a1 1 0 102 0v-1zm6-3a1 1 0 10-2 0v3a1 1 0 102 0v-3zm-3 0a1 1 0 10-2 0v3a1 1 0 102 0v-3z" clipRule="evenodd" /></svg>);
-const TextIcon = ({ className = "w-5 h-5" }) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}><path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zM2 15.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z" clipRule="evenodd" /></svg>);
+const TextIcon = ({ className = "w-5 h-5" }) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}><path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zM2 15.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 01-.75-.75z" clipRule="evenodd" /></svg>);
 const ErrorIcon = ({ className = "w-5 h-5" }) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className}><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>);
 const SpinnerIcon = ({ className = "w-5 h-5 animate-spin" }) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>);
 const CloseIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>);
 const UploadIcon = ({ className = "w-8 h-8" }) => (<svg className={className} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" /></svg>);
-
-const Step: React.FC<{num: number, children: React.ReactNode}> = ({ num, children }) => (
-    <li className="flex gap-4">
-        <div className="flex-shrink-0 w-8 h-8 bg-gray-200 dark:bg-slate-700 rounded-full flex items-center justify-center font-bold">{num}</div>
-        <p className="flex-1">{children}</p>
-    </li>
-);
 
 const ImportResumeModal: React.FC<{
     isOpen: boolean;
@@ -81,8 +74,8 @@ const ImportResumeModal: React.FC<{
         e.stopPropagation();
         e.currentTarget.classList.remove('border-brand-yellow', 'dark:border-brand-yellow');
     };
-    
-     const handleSubmitFile = async () => {
+
+    const handleSubmitFile = async () => {
         if (!selectedFile) {
             setError("Please select a file first.");
             return;
@@ -135,7 +128,7 @@ const ImportResumeModal: React.FC<{
             setIsLoading(false);
         }
     };
-    
+
     useEffect(() => {
         if (isOpen) {
             setActiveTab('file');
@@ -152,7 +145,7 @@ const ImportResumeModal: React.FC<{
         { id: 'file', label: 'Resume File', icon: <FileIcon /> },
         { id: 'text', label: 'Paste Text', icon: <TextIcon /> }
     ];
-    
+
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in-up" style={{ animationDuration: '0.3s' }} onClick={onClose}>
@@ -168,7 +161,7 @@ const ImportResumeModal: React.FC<{
                 <div className="p-6">
                     <div className="flex bg-gray-100 dark:bg-slate-900/50 rounded-lg p-1 mb-6">
                         {tabs.map(tab => (
-                             <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`w-1/2 py-2 px-3 text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white shadow dark:bg-slate-700 text-black dark:text-white' : 'text-gray-500 hover:bg-white/50 dark:hover:bg-slate-700/50'}`}>
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`w-1/2 py-2 px-3 text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white shadow dark:bg-slate-700 text-black dark:text-white' : 'text-gray-500 hover:bg-white/50 dark:hover:bg-slate-700/50'}`}>
                                 {tab.icon}
                                 <span className="hidden sm:inline">{tab.label}</span>
                             </button>
@@ -186,7 +179,7 @@ const ImportResumeModal: React.FC<{
                             >
                                 <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-slate-800/50 hover:bg-gray-100 dark:border-slate-600 dark:hover:border-slate-500 dark:hover:bg-slate-700/50 transition-colors">
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-500 dark:text-gray-400">
-                                        <UploadIcon className="w-8 h-8 mb-4"/>
+                                        <UploadIcon className="w-8 h-8 mb-4" />
                                         <p className="mb-2 text-sm"><span className="font-semibold">Click to upload</span> or drag and drop</p>
                                         <p className="text-xs">PDF, DOC, DOCX (MAX. 5MB)</p>
                                     </div>
@@ -194,7 +187,7 @@ const ImportResumeModal: React.FC<{
                                 </label>
                             </div>
                             {selectedFile && <p className="text-center text-sm mt-3 text-gray-600 dark:text-slate-300">Selected: <strong>{selectedFile.name}</strong></p>}
-                             <button onClick={handleSubmitFile} disabled={isLoading || !selectedFile} className="mt-4 w-full bg-brand-yellow text-black font-bold py-3 px-6 rounded-lg hover:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            <button onClick={handleSubmitFile} disabled={isLoading || !selectedFile} className="mt-4 w-full bg-brand-yellow text-black font-bold py-3 px-6 rounded-lg hover:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                 {isLoading && <SpinnerIcon />}
                                 {isLoading ? 'Parsing Resume...' : 'Parse Resume & Continue'}
                             </button>
@@ -203,7 +196,7 @@ const ImportResumeModal: React.FC<{
 
                     {activeTab === 'text' && (
                         <div>
-                             <p className="text-sm text-gray-600 dark:text-slate-300 mb-3">Paste your resume content below. Our AI will automatically parse and structure it for you.</p>
+                            <p className="text-sm text-gray-600 dark:text-slate-300 mb-3">Paste your resume content below. Our AI will automatically parse and structure it for you.</p>
                             <textarea
                                 value={pastedText}
                                 onChange={(e) => setPastedText(e.target.value)}
@@ -211,15 +204,15 @@ const ImportResumeModal: React.FC<{
                                 placeholder="Paste your resume content here..."
                                 className="w-full p-3 border border-gray-300 dark:border-slate-600 bg-transparent rounded-lg focus:ring-1 focus:ring-brand-yellow focus:border-brand-yellow transition"
                             />
-                             <button onClick={() => handleSubmitText(pastedText)} disabled={isLoading || !pastedText} className="mt-4 w-full bg-brand-yellow text-black font-bold py-3 px-6 rounded-lg hover:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            <button onClick={() => handleSubmitText(pastedText)} disabled={isLoading || !pastedText} className="mt-4 w-full bg-brand-yellow text-black font-bold py-3 px-6 rounded-lg hover:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                 {isLoading && <SpinnerIcon />}
                                 {isLoading ? 'Parsing Resume...' : 'Parse Resume & Continue'}
                             </button>
                         </div>
                     )}
-                     {error && (
+                    {error && (
                         <div className="mt-4 flex items-center gap-3 text-sm text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20 p-3 rounded-lg">
-                            <ErrorIcon className="w-6 h-6 flex-shrink-0"/>
+                            <ErrorIcon className="w-6 h-6 flex-shrink-0" />
                             <span>{error}</span>
                         </div>
                     )}
@@ -231,8 +224,14 @@ const ImportResumeModal: React.FC<{
 
 
 const AppContent: React.FC = () => {
-    const { isSignedIn, isLoaded } = useAuth();
-    const { user } = useUser();
+    // Check if auth hook is available, if not, bypass auth logic
+    const auth = useAuth();
+    const userHook = useUser();
+
+    const isSignedIn = auth?.isSignedIn;
+    const isLoaded = auth?.isLoaded;
+    const user = userHook?.user;
+
     const [view, setView] = useState<View>('landing');
     const [resumes, setResumes] = useState<Resume[]>([]);
     const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
@@ -241,9 +240,14 @@ const AppContent: React.FC = () => {
     const [appIsInitialized, setAppIsInitialized] = useState(false);
     const hasLoadedData = useRef(false);
 
-    // Effect 1: Handles data loading.
-    // This effect waits for Clerk to be ready, then loads the user's data.
-    // After data is loaded, it marks the app as initialized.
+    // Fail-safe: Hide loading screen after 3 seconds no matter what
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setAppIsInitialized(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
+
     useEffect(() => {
         if (isLoaded && !hasLoadedData.current) {
             if (isSignedIn && user) {
@@ -253,19 +257,20 @@ const AppContent: React.FC = () => {
                     setResumes(savedResumes ? JSON.parse(savedResumes) : mockResumes);
                 } catch (error) {
                     console.error("Failed to load resumes from localStorage:", error);
-                    setResumes(mockResumes); // Fallback on error
+                    setResumes(mockResumes);
                 }
             } else {
-                setResumes([]); // No user, no resumes
+                setResumes([]);
             }
             hasLoadedData.current = true;
-            setAppIsInitialized(true); // Signal that data is ready
+            setAppIsInitialized(true);
+        } else if (isLoaded === false) { // Handle cases where Clerk is not available
+            setResumes([]);
+            hasLoadedData.current = true;
+            setAppIsInitialized(true);
         }
     }, [isLoaded, isSignedIn, user]);
 
-    // Effect 2: Hides the loading screen.
-    // This effect ONLY watches the appIsInitialized flag. Once true, it hides the screen.
-    // This decouples the UI transition from the data loading logic.
     useEffect(() => {
         if (appIsInitialized) {
             const loadingScreen = document.getElementById('loading-screen');
@@ -273,16 +278,15 @@ const AppContent: React.FC = () => {
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => {
                     if (loadingScreen) loadingScreen.style.display = 'none';
-                }, 500); // Matches CSS transition duration
+                }, 500);
             }
         }
     }, [appIsInitialized]);
 
-    // Save resumes to localStorage whenever they change, but only after the initial load.
     useEffect(() => {
         if (hasLoadedData.current && isSignedIn && user) {
-             const storageKey = `resumes_${user.id}`;
-             localStorage.setItem(storageKey, JSON.stringify(resumes));
+            const storageKey = `resumes_${user.id}`;
+            localStorage.setItem(storageKey, JSON.stringify(resumes));
         }
     }, [resumes, isSignedIn, user]);
 
@@ -323,12 +327,11 @@ const AppContent: React.FC = () => {
         setView('builder');
     };
 
-    // Handle navigation flows triggered after sign-up.
     useEffect(() => {
-        if (appIsInitialized && isSignedIn) {
+        if (appIsInitialized && isSignedIn && user) {
             const handleAuthChange = async () => {
-                const templateToCreate = user?.unsafeMetadata.initiate_create_flow_with_template as TemplateName | undefined;
-                const simpleCreateFlow = user?.unsafeMetadata.initiate_create_flow === true;
+                const templateToCreate = user.unsafeMetadata?.initiate_create_flow_with_template as TemplateName | undefined;
+                const simpleCreateFlow = user.unsafeMetadata?.initiate_create_flow === true;
 
                 if (templateToCreate) {
                     await user.update({ unsafeMetadata: { initiate_create_flow_with_template: undefined } });
@@ -342,9 +345,8 @@ const AppContent: React.FC = () => {
         }
     }, [appIsInitialized, isSignedIn, user]);
 
-    // Navigate to dashboard if signed in, otherwise ensure public page on view change.
     useEffect(() => {
-        if (appIsInitialized) { // Only run navigation logic after app is ready
+        if (appIsInitialized) {
             if (isSignedIn && view === 'landing') {
                 setView('dashboard');
             }
@@ -360,7 +362,7 @@ const AppContent: React.FC = () => {
     const handleCreateNew = () => {
         setImportModalOpen(true);
     };
-    
+
     const handleImportedResume = (parsedData: any) => {
         const now = Date.now();
         const newResume: Resume = {
@@ -369,13 +371,13 @@ const AppContent: React.FC = () => {
             template: 'professionalV2',
             lastEdited: new Date().toISOString(),
             personalInfo: parsedData.personalInfo || { name: '', email: '', phone: '', location: '', website: '', summary: '', targetTitle: '' },
-            experience: (parsedData.experience || []).map((exp: any, i: number) => ({...exp, id: `exp-${now}-${i}`})),
-            education: (parsedData.education || []).map((edu: any, i: number) => ({...edu, id: `edu-${now}-${i}`})),
-            skills: (parsedData.skills || []).map((skill: any, i: number) => ({...skill, id: `skill-${now}-${i}`})),
-            projects: (parsedData.projects || []).map((proj: any, i: number) => ({...proj, id: `proj-${now}-${i}`})),
-            certifications: (parsedData.certifications || []).map((cert: any, i: number) => ({...cert, id: `cert-${now}-${i}`})),
-            volunteering: (parsedData.volunteering || []).map((vol: any, i: number) => ({...vol, id: `vol-${now}-${i}`})),
-            publications: (parsedData.publications || []).map((pub: any, i: number) => ({...pub, id: `pub-${now}-${i}`})),
+            experience: (parsedData.experience || []).map((exp: any, i: number) => ({ ...exp, id: `exp-${now}-${i}` })),
+            education: (parsedData.education || []).map((edu: any, i: number) => ({ ...edu, id: `edu-${now}-${i}` })),
+            skills: (parsedData.skills || []).map((skill: any, i: number) => ({ ...skill, id: `skill-${now}-${i}` })),
+            projects: (parsedData.projects || []).map((proj: any, i: number) => ({ ...proj, id: `proj-${now}-${i}` })),
+            certifications: (parsedData.certifications || []).map((cert: any, i: number) => ({ ...cert, id: `cert-${now}-${i}` })),
+            volunteering: (parsedData.volunteering || []).map((vol: any, i: number) => ({ ...vol, id: `vol-${now}-${i}` })),
+            publications: (parsedData.publications || []).map((pub: any, i: number) => ({ ...pub, id: `pub-${now}-${i}` })),
             design: {
                 fontFamily: "'Inter', sans-serif",
                 fontSize: '10pt',
@@ -402,7 +404,7 @@ const AppContent: React.FC = () => {
         const newResume: Resume = {
             id: `res-${now}`,
             title: 'Untitled Resume',
-            template: 'professionalV2', // Hardcoded default template
+            template: 'professionalV2',
             lastEdited: new Date().toISOString(),
             personalInfo: { name: 'John Doe', email: 'john.doe@example.com', phone: '', location: '', website: '', summary: '', targetTitle: '' },
             experience: [],
@@ -440,7 +442,7 @@ const AppContent: React.FC = () => {
     const handleDelete = (id: string) => {
         setResumes(prev => prev.filter(r => r.id !== id));
     };
-    
+
     const handleSave = (updatedResume: Resume) => {
         setResumes(prev => prev.map(r => r.id === updatedResume.id ? { ...updatedResume, lastEdited: new Date().toISOString() } : r));
         setView('dashboard');
@@ -450,7 +452,7 @@ const AppContent: React.FC = () => {
         setSelectedResumeId(null);
         setView('dashboard');
     }
-    
+
     const handleHomeClick = () => {
         if (isSignedIn) {
             handleBackToDashboard();
@@ -471,12 +473,11 @@ const AppContent: React.FC = () => {
     const selectedResume = resumes.find(r => r.id === selectedResumeId);
 
     const renderContent = () => {
-        // Don't render anything until the app is fully initialized to prevent flashes.
         if (!appIsInitialized) {
-            return null; 
+            return null;
         }
 
-        switch(view) {
+        switch (view) {
             case 'landing': return <LandingPage onNavigate={setView} onCreateNew={handleCreateNew} onCreateFromTemplate={handleCreateFromTemplate} />;
             case 'dashboard': return <DashboardPage resumes={resumes} onCreateNew={handleCreateNew} onEdit={handleEdit} onDelete={handleDelete} onCreateBlank={handleCreateBlank} />;
             case 'builder': return selectedResume && <BuilderPage resume={selectedResume} onSave={handleSave} onBack={handleBackToDashboard} />;
@@ -488,11 +489,10 @@ const AppContent: React.FC = () => {
             case 'contact': return <ContactPage onBackToHome={handleNavigateToLanding} />;
             case 'privacy': return <PrivacyPolicyPage onBackToHome={handleNavigateToLanding} />;
             case 'terms': return <TermsOfServicePage onBackToHome={handleNavigateToLanding} />;
-            default: return <LandingPage onNavigate={setView} onCreateNew={handleCreateNew} onCreateFromTemplate={handleCreateFromTemplate}/>;
+            default: return <LandingPage onNavigate={setView} onCreateNew={handleCreateNew} onCreateFromTemplate={handleCreateFromTemplate} />;
         }
     }
-    
-    // Pages that should show the main navbar
+
     const showNavbar = !['builder'].includes(view);
 
 

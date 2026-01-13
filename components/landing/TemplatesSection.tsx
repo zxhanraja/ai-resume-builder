@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useLayoutEffect, useEffect } from 'react';
 import { useAuth, SignUpButton } from '@clerk/clerk-react';
 import { TEMPLATES, mockResumes } from '../../constants';
@@ -83,7 +84,7 @@ const TemplateCardPreview: React.FC<{ templateId: TemplateName }> = ({ templateI
             observer.observe(containerRef.current);
         }
         updateScale();
-        
+
         return () => {
             if (containerRef.current) {
                 // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,7 +95,7 @@ const TemplateCardPreview: React.FC<{ templateId: TemplateName }> = ({ templateI
 
     return (
         <div ref={containerRef} className="relative w-full aspect-[8.5/11] bg-white border-2 border-gray-200 dark:border-slate-700 dark:bg-white rounded-xl pointer-events-none shadow-lg overflow-hidden">
-             <div
+            <div
                 className="absolute top-1/2 left-1/2 bg-white"
                 style={{
                     width: '8.5in',
@@ -117,13 +118,13 @@ interface TemplatePreviewModalProps {
 
 const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ templateId, onClose, onCreateFromTemplate }) => {
     const { isSignedIn } = useAuth();
-    
+
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         const handleEsc = (event: KeyboardEvent) => {
-           if (event.key === 'Escape') {
-            onClose();
-           }
+            if (event.key === 'Escape') {
+                onClose();
+            }
         };
         window.addEventListener('keydown', handleEsc);
 
@@ -134,7 +135,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ templateId,
     }, [onClose]);
 
     const templateName = TEMPLATES.find(t => t.id === templateId)?.name || 'Resume';
-    
+
     const handleUseTemplate = () => {
         if (onCreateFromTemplate) {
             onCreateFromTemplate(templateId);
@@ -177,14 +178,14 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ templateId,
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] transform transition-all flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="flex-shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-gray-200 dark:border-slate-800">
                     <h2 className="text-xl font-bold text-center sm:text-left">{templateName} Template</h2>
-                     <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button onClick={onClose} className="w-1/2 sm:w-auto text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">Close</button>
                         <div className="w-1/2 sm:w-auto">
                             {isSignedIn ? (
                                 <button onClick={handleUseTemplate} className="w-full font-bold bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 dark:bg-brand-yellow dark:text-black dark:hover:brightness-95 transition-colors">Use This Template</button>
                             ) : (
                                 <SignUpButton mode="modal" unsafeMetadata={{ initiate_create_flow_with_template: templateId }}>
-                                     <button className="w-full font-bold bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 dark:bg-brand-yellow dark:text-black dark:hover:brightness-95 transition-colors">Use This Template</button>
+                                    <button className="w-full font-bold bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 dark:bg-brand-yellow dark:text-black dark:hover:brightness-95 transition-colors">Use This Template</button>
                                 </SignUpButton>
                             )}
                         </div>
@@ -210,9 +211,11 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ templateId,
 
 interface TemplatesSectionProps {
     onCreateFromTemplate: (templateId: TemplateName) => void;
+    // FIX: Added isEmbedded prop to resolve type error in components/pages/TemplatesPage.tsx
+    isEmbedded?: boolean;
 }
 
-export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ onCreateFromTemplate }) => {
+export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ onCreateFromTemplate, isEmbedded }) => {
     type FilterType = 'All' | TemplateStyle | TemplateLayout;
     const [activeFilter, setActiveFilter] = useState<FilterType>('All');
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateName | null>(null);
@@ -236,7 +239,7 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ onCreateFrom
     ];
 
     const filters: FilterType[] = ['All', 'Modern', 'Traditional', 'Creative', '1 Column', '2 Column'];
-    
+
     const filteredTemplates = useMemo(() => {
         if (activeFilter === 'All') return TEMPLATES;
         return TEMPLATES.filter(t => t.style === activeFilter || t.layout === activeFilter);
@@ -244,48 +247,51 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ onCreateFrom
 
 
     return (
-        <section className="py-20 bg-gray-50 dark:bg-slate-900 overflow-hidden">
+        <section className={`py-20 bg-gray-50 dark:bg-slate-900 overflow-hidden ${isEmbedded ? 'py-0' : ''}`}>
             <div className="container mx-auto text-center px-4 sm:px-6 lg:px-8">
-                 <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
-                    ATS-Friendly Templates That Get Results
-                </h2>
+                {!isEmbedded && (
+                    <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+                        ATS-Friendly Templates That Get Results
+                    </h2>
+                )}
                 <p className="mt-4 text-lg text-gray-600 dark:text-slate-400 max-w-3xl mx-auto">
                     Every resume template is free, professionally designed, and fully customizable to help you stand out.
                 </p>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                    {features.map((feature, index) => (
-                        <div key={index} className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl shadow-lg border border-transparent hover:border-brand-yellow/50 hover:-translate-y-1 transition-all">
-                            <div className="text-black dark:text-brand-yellow mb-4">
-                                {feature.icon}
+                {!isEmbedded && (
+                    <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                        {features.map((feature, index) => (
+                            <div key={index} className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl shadow-lg border border-transparent hover:border-brand-yellow/50 hover:-translate-y-1 transition-all">
+                                <div className="text-black dark:text-brand-yellow mb-4">
+                                    {feature.icon}
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+                                <p className="text-gray-600 dark:text-slate-400">{feature.description}</p>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
-                            <p className="text-gray-600 dark:text-slate-400">{feature.description}</p>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
-             <div className="flex justify-center flex-wrap gap-2 my-12 px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center flex-wrap gap-2 my-12 px-4 sm:px-6 lg:px-8">
                 {filters.map(filter => (
                     <button
                         key={filter}
                         onClick={() => setActiveFilter(filter)}
-                        className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
-                            activeFilter === filter
+                        className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${activeFilter === filter
                                 ? 'bg-black text-white dark:bg-brand-yellow dark:text-black'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                        }`}
+                            }`}
                     >
                         {filter}
                     </button>
                 ))}
             </div>
-            
+
             <div className="relative">
                 <div className="flex gap-8 overflow-x-auto scrollbar-hide py-8 pl-4 pr-16 sm:pl-6 sm:pr-24 lg:pl-8 lg:pr-32 snap-x snap-mandatory">
                     {filteredTemplates.map((template, index) => (
-                        <div 
-                            key={template.id} 
+                        <div
+                            key={template.id}
                             className="flex-shrink-0 w-72 sm:w-80 snap-center opacity-0 animate-fade-in-up"
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
@@ -301,7 +307,7 @@ export const TemplatesSection: React.FC<TemplatesSectionProps> = ({ onCreateFrom
                         </div>
                     ))}
                 </div>
-                 <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-gray-50 dark:from-slate-900 to-transparent pointer-events-none"></div>
+                <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-16 bg-gradient-to-r from-gray-50 dark:from-slate-900 to-transparent pointer-events-none"></div>
                 <div className="absolute top-0 bottom-0 right-0 w-8 sm:w-16 bg-gradient-to-l from-gray-50 dark:from-slate-900 to-transparent pointer-events-none"></div>
             </div>
 

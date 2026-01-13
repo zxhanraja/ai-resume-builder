@@ -2,12 +2,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Resume } from '../types';
 
-// Use the VITE_ prefixed environment variable which is compatible with Vite's build process.
-// We also fallback to the standard process.env.API_KEY if available.
-// Fixed: Cast import.meta to any to resolve TS error. 
-// Fixed: Always use process.env.API_KEY directly for GoogleGenAI initialization per guidelines.
-const apiKey = (import.meta as any).env.VITE_API_KEY || process.env.API_KEY;
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Robust API key retrieval for production
+const getApiKey = () => {
+  try {
+    return (import.meta as any).env?.VITE_API_KEY ||
+      (process.env as any).VITE_API_KEY ||
+      (process.env as any).API_KEY;
+  } catch (e) {
+    return (process.env as any).API_KEY;
+  }
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() as string });
 
 const resumeResponseSchema = {
   type: Type.OBJECT,
@@ -140,7 +146,6 @@ const parseResume = async (prompt: any, isFile: boolean = false) => {
       ? "You are an expert document parser. Your task is to extract structured resume information from the provided file and format it into the specified JSON schema. Be resilient to various file formats and layouts."
       : "You are a strict resume parsing engine. Your SOLE function is to extract structured data from the provided text and fit it into the JSON schema. MANDATORY RULES: 1. Parse ALL sections present in the text (Work Experience, Education, Skills, Projects, Certifications, etc.). DO NOT OMIT ANY SECTION. 2. For each section, extract ALL items. DO NOT OMIT any job, degree, or skill. 3. Preserve original formatting for descriptions using newline characters ('\\n'). 4. If a field in the schema is not present in the text (e.g., no 'twitter' URL), return an empty string for that field. Do not omit keys. Your output must be a complete data representation of the resume text.";
 
-    // Fixed: Use 'gemini-3-pro-preview' for complex text tasks per guidelines.
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: prompt,
@@ -187,7 +192,6 @@ export const parseResumeFromFile = async (file: { mimeType: string, data: string
 
 export const improveResumeText = async (text: string, context: string): Promise<string> => {
   try {
-    // Fixed: Use 'gemini-3-flash-preview' for basic text tasks.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Rewrite the following ${context} to be more concise and impactful for a resume. Focus on action verbs and quantifiable results. Original text:\n\n"${text}"`,
@@ -214,7 +218,6 @@ Current Company: "${experience.company}"
 Current Description:
 "${experience.description}"
 `;
-    // Fixed: Use 'gemini-3-flash-preview' for basic text tasks.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -244,7 +247,6 @@ Current Description:
 
 export const suggestJobTitle = async (context: { title: string, company: string, description: string }): Promise<string[]> => {
   try {
-    // Fixed: Use 'gemini-3-flash-preview'.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Based on the following job information, suggest 3-5 improved or more specific job titles that are industry-standard.\n\nCurrent Title: "${context.title}"\nCompany: "${context.company}"\nDescription: "${context.description}"`,
@@ -273,7 +275,6 @@ export const suggestJobTitle = async (context: { title: string, company: string,
 
 export const getAtsSuggestions = async (resumeText: string): Promise<string> => {
   try {
-    // Fixed: Use 'gemini-3-flash-preview'.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Analyze the following resume text for ATS (Applicant Tracking System) friendliness. Provide a list of actionable suggestions to improve it. Focus on keywords, formatting, and clarity. Format the response as a markdown checklist.\n\n--- RESUME TEXT ---\n${resumeText}`,
@@ -287,7 +288,6 @@ export const getAtsSuggestions = async (resumeText: string): Promise<string> => 
 
 export const generateCoverLetter = async (resumeText: string, jobDescription: string): Promise<string> => {
   try {
-    // Fixed: Use 'gemini-3-flash-preview'.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Based on the following resume and job description, write a professional and tailored cover letter. The cover letter should highlight the candidate's skills and experiences that are most relevant to the job description, and should be addressed to the hiring manager. The tone should be professional and enthusiastic. Do not include placeholders like "[Your Name]" or "[Company Name]"; instead, use the information available in the resume.
@@ -320,7 +320,6 @@ ${JSON.stringify(resume)}
 --- SUGGESTIONS ---
 ${suggestions}`;
 
-    // Fixed: Use 'gemini-3-pro-preview' for structure editing tasks.
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: prompt,
@@ -334,12 +333,11 @@ ${suggestions}`;
     const jsonStr = response.text || "{}";
     const updatedResume = JSON.parse(jsonStr.trim());
 
-    // A simple validation to ensure we're not getting a completely different structure
     if (!updatedResume.personalInfo || !Array.isArray(updatedResume.experience)) {
       throw new Error("The AI returned an invalid resume structure.");
     }
 
-    return { ...resume, ...updatedResume }; // Merge to ensure fields not in schema (like id, title) are preserved
+    return { ...resume, ...updatedResume };
 
   } catch (error: any) {
     console.error('Error applying ATS suggestions:', error);
