@@ -147,7 +147,7 @@ const parseResume = async (prompt: any, isFile: boolean = false) => {
       : "You are a strict resume parsing engine. Your SOLE function is to extract structured data from the provided text and fit it into the JSON schema. MANDATORY RULES: 1. Parse ALL sections present in the text (Work Experience, Education, Skills, Projects, Certifications, etc.). DO NOT OMIT ANY SECTION. 2. For each section, extract ALL items. DO NOT OMIT any job, degree, or skill. 3. Preserve original formatting for descriptions using newline characters ('\\n'). 4. If a field in the schema is not present in the text (e.g., no 'twitter' URL), return an empty string for that field. Do not omit keys. Your output must be a complete data representation of the resume text.";
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-pro",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -321,7 +321,7 @@ ${JSON.stringify(resume)}
 ${suggestions}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-pro",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
