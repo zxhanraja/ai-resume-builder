@@ -4,16 +4,49 @@ import type { Resume } from '../types';
 
 // Robust API key retrieval for production
 const getApiKey = () => {
+  let key;
   try {
-    return (import.meta as any).env?.VITE_API_KEY ||
+    key = (import.meta as any).env?.VITE_API_KEY ||
       (process.env as any).VITE_API_KEY ||
       (process.env as any).API_KEY;
   } catch (e) {
-    return (process.env as any).API_KEY;
+    key = (process.env as any).API_KEY;
   }
+
+  if (!key) {
+    console.error("CRITICAL: Gemini API Key is missing! Please check your .env.local file and ensure VITE_API_KEY is set.");
+  }
+  return key;
 };
 
-const ai = new GoogleGenAI({ apiKey: getApiKey() as string });
+const apiKey = getApiKey();
+const ai = new GoogleGenAI({ apiKey: apiKey || "dummy_key_to_prevent_crash_on_init" });
+
+const handleGeminiError = (error: any, context: string): { error: string } => {
+  console.error(`Error in ${context}:`, error);
+
+  const message = error.message || error.toString();
+
+  // Check for 429 Quota Exceeded
+  if (message.includes('429') || message.includes('Quota exceeded') || message.includes('quota')) {
+    return { error: 'Gemini API usage limit exceeded (429). Please try again in a minute.' };
+  }
+
+  // Check for 503 Overloaded
+  if (message.includes('503') || message.includes('Overloaded')) {
+    return { error: 'Gemini API is currently overloaded. Please try again later.' };
+  }
+
+  if (message.includes('API key not valid')) {
+    return { error: 'Invalid API Key. Please check your configuration.' };
+  }
+
+  if (message.includes('JSON')) {
+    return { error: 'Failed to process AI response. Please try again.' };
+  }
+
+  return { error: `AI Service Error: ${message.substring(0, 100)}...` };
+};
 
 const resumeResponseSchema = {
   type: Type.OBJECT,
@@ -141,6 +174,8 @@ const resumeResponseSchema = {
 };
 
 const parseResume = async (prompt: any, isFile: boolean = false) => {
+  if (!apiKey) return { error: 'API Key is missing. Please configuration your .env file.' };
+
   try {
     const systemInstruction = isFile
       ? "You are an expert document parser. Your task is to extract structured resume information from the provided file and format it into the specified JSON schema. Be resilient to various file formats and layouts."
@@ -160,14 +195,7 @@ const parseResume = async (prompt: any, isFile: boolean = false) => {
     return parsedData;
 
   } catch (error: any) {
-    console.error('Error parsing resume:', error);
-    if (error.message.includes('API key not valid')) {
-      return { error: 'Your API Key is not valid. Please check your configuration.' };
-    }
-    if (error.message.includes('JSON')) {
-      return { error: 'Failed to parse resume. The format might be unsupported or the AI could not structure the data.' };
-    }
-    return { error: error.message || 'An unknown error occurred during parsing.' };
+    return handleGeminiError(error, 'parseResume');
   }
 }
 
@@ -191,6 +219,7 @@ export const parseResumeFromFile = async (file: { mimeType: string, data: string
 };
 
 export const improveResumeText = async (text: string, context: string): Promise<string> => {
+  if (!apiKey) return text;
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -203,12 +232,13 @@ export const improveResumeText = async (text: string, context: string): Promise<
     });
     return response.text?.trim() || text;
   } catch (error) {
-    console.error('Error improving text:', error);
+    handleGeminiError(error, 'improveResumeText');
     return text;
   }
 };
 
-export const improveExperienceItem = async (experience: { jobTitle: string, company: string, description: string }): Promise<{ jobTitle: string, company: string, description: string }> => {
+export const improveExperienceItem = async (experience: { jobTitle: string, company: string, description: string }): Promise<{ jobTitle: string, company: string, description: string } | { error: string }> => {
+  if (!apiKey) return experience;
   try {
     const prompt = `
 Analyze the following work experience entry. If the job title or company name is generic (like "New Job", "Company Name") or empty, suggest a more professional and specific one based on the description. Also, rewrite the description to be more concise and impactful, focusing on action verbs and quantifiable results.
@@ -239,13 +269,17 @@ Current Description:
     const parsedData = JSON.parse(jsonStr.trim());
     return parsedData;
   } catch (error) {
-    console.error('Error improving experience item:', error);
+    const handled = handleGeminiError(error, 'improveExperienceItem');
+    // Return original so UI doesn't break, hopefully user sees log.
+    // Or we could return the error object if the UI supports it.
+    // Given the signature, we might just have to return original and log.
     return experience;
   }
 };
 
 
 export const suggestJobTitle = async (context: { title: string, company: string, description: string }): Promise<string[]> => {
+  if (!apiKey) return [];
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -268,12 +302,13 @@ export const suggestJobTitle = async (context: { title: string, company: string,
     const json = JSON.parse(jsonStr.trim());
     return json.suggestions || [];
   } catch (error) {
-    console.error('Error suggesting job title:', error);
+    handleGeminiError(error, 'suggestJobTitle');
     return [];
   }
 };
 
 export const getAtsSuggestions = async (resumeText: string): Promise<string> => {
+  if (!apiKey) return 'API Key missing. Cannot analyze resume.';
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -281,12 +316,13 @@ export const getAtsSuggestions = async (resumeText: string): Promise<string> => 
     });
     return response.text?.trim() || 'Could not analyze the resume at this time.';
   } catch (error) {
-    console.error('Error getting ATS suggestions:', error);
-    return 'Could not analyze the resume at this time.';
+    const handled = handleGeminiError(error, 'getAtsSuggestions');
+    return handled.error;
   }
 };
 
 export const generateCoverLetter = async (resumeText: string, jobDescription: string): Promise<string> => {
+  if (!apiKey) return 'API Key missing. Cannot generate cover letter.';
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -300,12 +336,13 @@ ${jobDescription}`,
     });
     return response.text?.trim() || 'Could not generate the cover letter at this time. Please try again.';
   } catch (error) {
-    console.error('Error generating cover letter:', error);
-    return 'Could not generate the cover letter at this time. Please try again.';
+    const handled = handleGeminiError(error, 'generateCoverLetter');
+    return handled.error;
   }
 };
 
 export const applyAtsSuggestions = async (resume: Resume, suggestions: string): Promise<Resume | { error: string }> => {
+  if (!apiKey) return { error: 'API Key missing.' };
   try {
     const prompt = `Based on the following resume JSON and the list of suggestions, please apply the suggestions and return the updated resume as a JSON object.
 Ensure the returned JSON is valid and adheres strictly to the provided schema. Do not add, remove, or rename any keys in the JSON structure.
@@ -340,10 +377,6 @@ ${suggestions}`;
     return { ...resume, ...updatedResume };
 
   } catch (error: any) {
-    console.error('Error applying ATS suggestions:', error);
-    if (error.message.includes('JSON')) {
-      return { error: 'Failed to apply suggestions. The AI could not process the requested changes.' };
-    }
-    return { error: error.message || 'An unknown error occurred while applying suggestions.' };
+    return handleGeminiError(error, 'applyAtsSuggestions');
   }
 };
