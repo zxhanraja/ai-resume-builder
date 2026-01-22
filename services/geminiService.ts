@@ -22,8 +22,47 @@ const getApiKey = () => {
 const apiKey = getApiKey();
 const ai = new GoogleGenAI({ apiKey: apiKey || "dummy_key_to_prevent_crash_on_init" });
 
+// Fallback models to try in order
+const MODEL_FALLBACKS = [
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-001",
+  "gemini-2.0-flash-exp",
+  "gemini-1.5-pro"
+];
+
+// Helper to try generation with multiple models
+const generateWithFallback = async (params: any, context: string) => {
+  let lastError: any = null;
+
+  for (const modelName of MODEL_FALLBACKS) {
+    try {
+      console.log(`Attempting ${context} with model: ${modelName}`);
+      const response = await ai.models.generateContent({
+        ...params,
+        model: modelName,
+      });
+      return response; // Success!
+    } catch (error: any) {
+      console.warn(`Failed ${context} with model ${modelName}:`, error.message);
+      lastError = error;
+
+      // If it's not a 404 or 503, maybe don't retry? 
+      // But for now, let's retry on almost everything to be safe given the user's issues.
+      // Specifically, 404 means model not found, 503 means overloaded.
+      const msg = error.message || '';
+      if (!msg.includes('404') && !msg.includes('not found') && !msg.includes('503') && !msg.includes('Overloaded')) {
+        // optionally break here if we want to fail fast on auth errors, but 
+        // user might have different perms for different models(unlikely)
+      }
+    }
+  }
+
+  // If all failed, throw the last error to be handled by the caller
+  throw lastError;
+};
+
 const handleGeminiError = (error: any, context: string): { error: string } => {
-  console.error(`Error in ${context}:`, error);
+  console.error(`Error in ${context} (All fallbacks failed):`, error);
 
   const message = error.message || error.toString();
 
@@ -187,15 +226,16 @@ const parseResume = async (prompt: any, isFile: boolean = false) => {
       ? "You are an expert document parser. Your task is to extract structured resume information from the provided file and format it into the specified JSON schema. Be resilient to various file formats and layouts."
       : "You are a strict resume parsing engine. Your SOLE function is to extract structured data from the provided text and fit it into the JSON schema. MANDATORY RULES: 1. Parse ALL sections present in the text (Work Experience, Education, Skills, Projects, Certifications, etc.). DO NOT OMIT ANY SECTION. 2. For each section, extract ALL items. DO NOT OMIT any job, degree, or skill. 3. Preserve original formatting for descriptions using newline characters ('\\n'). 4. If a field in the schema is not present in the text (e.g., no 'twitter' URL), return an empty string for that field. Do not omit keys. Your output must be a complete data representation of the resume text.";
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-001",
+    // Use fallback method instead of direct call
+    const response = await generateWithFallback({
       contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: resumeResponseSchema,
         systemInstruction,
       },
-    });
+    }, 'parseResume');
+
     const jsonStr = response.text || "{}";
     const parsedData = JSON.parse(jsonStr.trim());
     return parsedData;
@@ -227,15 +267,15 @@ export const parseResumeFromFile = async (file: { mimeType: string, data: string
 export const improveResumeText = async (text: string, context: string): Promise<string> => {
   if (!apiKey) return text;
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
+    const response = await generateWithFallback({
       contents: `Rewrite the following ${context} to be more concise and impactful for a resume. Focus on action verbs and quantifiable results. Original text:\n\n"${text}"`,
       config: {
         systemInstruction: "You are a professional resume editor. Your task is to rewrite the given text. ONLY return the final, rewritten text. Do not include any additional explanations, options, markdown, or commentary.",
         temperature: 0.7,
         topP: 0.95,
       }
-    });
+    }, 'improveResumeText');
+
     return response.text?.trim() || text;
   } catch (error) {
     handleGeminiError(error, 'improveResumeText');
@@ -254,8 +294,7 @@ Current Company: "${experience.company}"
 Current Description:
 "${experience.description}"
 `;
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
+    const response = await generateWithFallback({
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -270,15 +309,13 @@ Current Description:
         },
         systemInstruction: "You are a professional resume editor. Your task is to improve the provided work experience entry. Return ONLY a JSON object with the 'jobTitle', 'company', and 'description'. If an original field is already good, return it unchanged. For the description, preserve the bullet point format by using newline characters ('\\n'). Do not add any commentary or markdown.",
       }
-    });
+    }, 'improveExperienceItem');
+
     const jsonStr = response.text || "{}";
     const parsedData = JSON.parse(jsonStr.trim());
     return parsedData;
   } catch (error) {
     const handled = handleGeminiError(error, 'improveExperienceItem');
-    // Return original so UI doesn't break, hopefully user sees log.
-    // Or we could return the error object if the UI supports it.
-    // Given the signature, we might just have to return original and log.
     return experience;
   }
 };
@@ -287,8 +324,7 @@ Current Description:
 export const suggestJobTitle = async (context: { title: string, company: string, description: string }): Promise<string[]> => {
   if (!apiKey) return [];
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
+    const response = await generateWithFallback({
       contents: `Based on the following job information, suggest 3-5 improved or more specific job titles that are industry-standard.\n\nCurrent Title: "${context.title}"\nCompany: "${context.company}"\nDescription: "${context.description}"`,
       config: {
         responseMimeType: "application/json",
@@ -303,7 +339,8 @@ export const suggestJobTitle = async (context: { title: string, company: string,
           required: ['suggestions']
         }
       }
-    });
+    }, 'suggestJobTitle');
+
     const jsonStr = response.text || "{}";
     const json = JSON.parse(jsonStr.trim());
     return json.suggestions || [];
@@ -316,10 +353,9 @@ export const suggestJobTitle = async (context: { title: string, company: string,
 export const getAtsSuggestions = async (resumeText: string): Promise<string> => {
   if (!apiKey) return 'API Key missing. Cannot analyze resume.';
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
+    const response = await generateWithFallback({
       contents: `Analyze the following resume text for ATS (Applicant Tracking System) friendliness. Provide a list of actionable suggestions to improve it. Focus on keywords, formatting, and clarity. Format the response as a markdown checklist.\n\n--- RESUME TEXT ---\n${resumeText}`,
-    });
+    }, 'getAtsSuggestions');
     return response.text?.trim() || 'Could not analyze the resume at this time.';
   } catch (error) {
     const handled = handleGeminiError(error, 'getAtsSuggestions');
@@ -330,8 +366,7 @@ export const getAtsSuggestions = async (resumeText: string): Promise<string> => 
 export const generateCoverLetter = async (resumeText: string, jobDescription: string): Promise<string> => {
   if (!apiKey) return 'API Key missing. Cannot generate cover letter.';
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
+    const response = await generateWithFallback({
       contents: `Based on the following resume and job description, write a professional and tailored cover letter. The cover letter should highlight the candidate's skills and experiences that are most relevant to the job description, and should be addressed to the hiring manager. The tone should be professional and enthusiastic. Do not include placeholders like "[Your Name]" or "[Company Name]"; instead, use the information available in the resume.
 
 --- RESUME TEXT ---
@@ -339,7 +374,7 @@ ${resumeText}
 
 --- JOB DESCRIPTION ---
 ${jobDescription}`,
-    });
+    }, 'generateCoverLetter');
     return response.text?.trim() || 'Could not generate the cover letter at this time. Please try again.';
   } catch (error) {
     const handled = handleGeminiError(error, 'generateCoverLetter');
@@ -363,15 +398,14 @@ ${JSON.stringify(resume)}
 --- SUGGESTIONS ---
 ${suggestions}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-001",
+    const response = await generateWithFallback({
       contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: resumeResponseSchema,
         systemInstruction: "You are an intelligent resume editor that updates JSON data based on instructions. You ONLY output valid JSON that matches the provided schema.",
       },
-    });
+    }, 'applyAtsSuggestions');
 
     const jsonStr = response.text || "{}";
     const updatedResume = JSON.parse(jsonStr.trim());
