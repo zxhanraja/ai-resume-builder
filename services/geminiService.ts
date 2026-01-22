@@ -26,8 +26,14 @@ const ai = new GoogleGenAI({ apiKey: apiKey || "dummy_key_to_prevent_crash_on_in
 const MODEL_FALLBACKS = [
   "gemini-1.5-flash",
   "gemini-1.5-flash-001",
+  "models/gemini-1.5-flash",
+  "models/gemini-1.5-flash-001",
   "gemini-2.0-flash-exp",
-  "gemini-1.5-pro"
+  "models/gemini-2.0-flash-exp",
+  "gemini-1.5-pro",
+  "models/gemini-1.5-pro",
+  "gemini-pro",
+  "models/gemini-pro"
 ];
 
 // Helper to try generation with multiple models
