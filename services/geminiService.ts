@@ -37,6 +37,12 @@ const handleGeminiError = (error: any, context: string): { error: string } => {
     return { error: 'Gemini API is currently overloaded. Please try again later.' };
   }
 
+  // Check for 404 Not Found
+  if (message.includes('404') || message.includes('not found')) {
+    return { error: 'Model not found (404). Please check the model name or API version.' };
+  }
+
+
   if (message.includes('API key not valid')) {
     return { error: 'Invalid API Key. Please check your configuration.' };
   }
@@ -182,7 +188,7 @@ const parseResume = async (prompt: any, isFile: boolean = false) => {
       : "You are a strict resume parsing engine. Your SOLE function is to extract structured data from the provided text and fit it into the JSON schema. MANDATORY RULES: 1. Parse ALL sections present in the text (Work Experience, Education, Skills, Projects, Certifications, etc.). DO NOT OMIT ANY SECTION. 2. For each section, extract ALL items. DO NOT OMIT any job, degree, or skill. 3. Preserve original formatting for descriptions using newline characters ('\\n'). 4. If a field in the schema is not present in the text (e.g., no 'twitter' URL), return an empty string for that field. Do not omit keys. Your output must be a complete data representation of the resume text.";
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-001",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -222,7 +228,7 @@ export const improveResumeText = async (text: string, context: string): Promise<
   if (!apiKey) return text;
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: `Rewrite the following ${context} to be more concise and impactful for a resume. Focus on action verbs and quantifiable results. Original text:\n\n"${text}"`,
       config: {
         systemInstruction: "You are a professional resume editor. Your task is to rewrite the given text. ONLY return the final, rewritten text. Do not include any additional explanations, options, markdown, or commentary.",
@@ -249,7 +255,7 @@ Current Description:
 "${experience.description}"
 `;
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -282,7 +288,7 @@ export const suggestJobTitle = async (context: { title: string, company: string,
   if (!apiKey) return [];
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: `Based on the following job information, suggest 3-5 improved or more specific job titles that are industry-standard.\n\nCurrent Title: "${context.title}"\nCompany: "${context.company}"\nDescription: "${context.description}"`,
       config: {
         responseMimeType: "application/json",
@@ -311,7 +317,7 @@ export const getAtsSuggestions = async (resumeText: string): Promise<string> => 
   if (!apiKey) return 'API Key missing. Cannot analyze resume.';
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: `Analyze the following resume text for ATS (Applicant Tracking System) friendliness. Provide a list of actionable suggestions to improve it. Focus on keywords, formatting, and clarity. Format the response as a markdown checklist.\n\n--- RESUME TEXT ---\n${resumeText}`,
     });
     return response.text?.trim() || 'Could not analyze the resume at this time.';
@@ -325,7 +331,7 @@ export const generateCoverLetter = async (resumeText: string, jobDescription: st
   if (!apiKey) return 'API Key missing. Cannot generate cover letter.';
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: `Based on the following resume and job description, write a professional and tailored cover letter. The cover letter should highlight the candidate's skills and experiences that are most relevant to the job description, and should be addressed to the hiring manager. The tone should be professional and enthusiastic. Do not include placeholders like "[Your Name]" or "[Company Name]"; instead, use the information available in the resume.
 
 --- RESUME TEXT ---
@@ -358,7 +364,7 @@ ${JSON.stringify(resume)}
 ${suggestions}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-001",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
