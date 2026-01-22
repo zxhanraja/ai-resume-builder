@@ -8,7 +8,7 @@ import DashboardPage from './components/dashboard/DashboardPage';
 import BuilderPage from './components/builder/BuilderPage';
 import type { Resume, View, BlogPost, TemplateName } from './types';
 import { mockResumes, BLOG_POSTS, TEMPLATES } from './constants';
-import { parseResumeFromText, parseResumeFromFile } from './services/geminiService';
+import { parseResumeFromText, parseResumeFromFile, testConnectionAndListModels } from './services/geminiService';
 
 import FeaturesPage from './components/pages/FeaturesPage';
 import FaqPage from './components/pages/FaqPage';
@@ -242,6 +242,9 @@ const AppContent: React.FC = () => {
 
     // Fail-safe: Hide loading screen after 3 seconds no matter what
     useEffect(() => {
+        // Run debug check
+        testConnectionAndListModels();
+
         const timer = setTimeout(() => {
             setAppIsInitialized(true);
         }, 3000);

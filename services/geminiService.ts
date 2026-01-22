@@ -22,18 +22,54 @@ const getApiKey = () => {
 const apiKey = getApiKey();
 const ai = new GoogleGenAI({ apiKey: apiKey || "dummy_key_to_prevent_crash_on_init" });
 
+// Debugging: List all available models
+export const testConnectionAndListModels = async () => {
+  if (!apiKey) {
+    console.error("Debug: No API Key found.");
+    return;
+  }
+  try {
+    console.log("Debug: Fetching available models...");
+    const response = await ai.models.list();
+    console.log("Debug: Available Models Response:", response);
+
+    if (response && response.models) {
+      console.log("Debug: Model Names:", response.models.map((m: any) => m.name || m.displayName));
+    }
+  } catch (error) {
+    console.error("Debug: Failed to list models:", error);
+  }
+};
+
 // Fallback models to try in order
 const MODEL_FALLBACKS = [
+  // Latest Stable (002) - Often works when 001/base doesn't
+  "gemini-1.5-flash-002",
+  "gemini-1.5-pro-002",
+
+  // Core Flash (Base)
   "gemini-1.5-flash",
   "gemini-1.5-flash-001",
-  "models/gemini-1.5-flash",
-  "models/gemini-1.5-flash-001",
+
+  // Fast/Cheap variant
+  "gemini-1.5-flash-8b",
+
+  // Experimental (User hit 429/Limit on this, so put it lower priority if others fail, or higher if others 404?)
+  // Actually, user hit 429 on this, meaning it EXISTS. If we wait, it works. 
+  // But better to try others first that might have free tier quota available?
+  // Let's keep it here.
   "gemini-2.0-flash-exp",
-  "models/gemini-2.0-flash-exp",
-  "gemini-1.5-pro",
-  "models/gemini-1.5-pro",
+
+  // Older Stable
+  "gemini-1.0-pro",
   "gemini-pro",
-  "models/gemini-pro"
+
+  // With 'models/' prefix - just in case
+  "models/gemini-1.5-flash-002",
+  "models/gemini-1.5-flash",
+  "models/gemini-1.5-flash-8b",
+  "models/gemini-2.0-flash-exp",
+  "models/gemini-1.0-pro"
 ];
 
 // Helper to try generation with multiple models
